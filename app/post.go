@@ -74,9 +74,9 @@ func (a *App) CreatePostAsUser(c *request.Context, post *model.Post, currentSess
 	// the post is NOT a reply post with CRT enabled
 	_, fromWebhook := post.GetProps()["from_webhook"]
 	_, fromBot := post.GetProps()["from_bot"]
-	isCRTReply := post.RootId != "" && a.IsCRTEnabledForUser(post.UserId)
+	isCRTReply := post.RootId != "" && a.IsCRTEnabledForUser(c, post.UserId)
 	if !fromWebhook && !fromBot && !isCRTReply {
-		if _, err := a.MarkChannelsAsViewed([]string{post.ChannelId}, post.UserId, currentSessionId, true); err != nil {
+		if _, err := a.MarkChannelsAsViewed(c, []string{post.ChannelId}, post.UserId, currentSessionId, true); err != nil {
 			mlog.Warn(
 				"Encountered error updating last viewed",
 				mlog.String("channel_id", post.ChannelId),
@@ -421,7 +421,7 @@ func (a *App) FillInPostProps(c request.CTX, post *model.Post, channel *model.Ch
 			channel = postChannel
 		}
 
-		mentionedChannels, err := a.GetChannelsByNames(channelMentions, channel.TeamId)
+		mentionedChannels, err := a.GetChannelsByNames(c, channelMentions, channel.TeamId)
 		if err != nil {
 			return err
 		}
@@ -727,7 +727,7 @@ func (a *App) publishWebsocketEventForPermalinkPost(c request.CTX, post *model.P
 		return false, err
 	}
 
-	channelMembers, err := a.GetChannelMembersPage(post.ChannelId, 0, 10000000)
+	channelMembers, err := a.GetChannelMembersPage(c, post.ChannelId, 0, 10000000)
 	if err != nil {
 		return false, err
 	}
@@ -1085,10 +1085,10 @@ func (a *App) AddCursorIdsForPostList(originalList *model.PostList, afterPost, b
 	originalList.NextPostId = nextPostId
 	originalList.PrevPostId = prevPostId
 }
-func (a *App) GetPostsForChannelAroundLastUnread(channelID, userID string, limitBefore, limitAfter int, skipFetchThreads bool, collapsedThreads, collapsedThreadsExtended bool) (*model.PostList, *model.AppError) {
+func (a *App) GetPostsForChannelAroundLastUnread(c request.CTX, channelID, userID string, limitBefore, limitAfter int, skipFetchThreads bool, collapsedThreads, collapsedThreadsExtended bool) (*model.PostList, *model.AppError) {
 	var member *model.ChannelMember
 	var err *model.AppError
-	if member, err = a.GetChannelMember(context.Background(), channelID, userID); err != nil {
+	if member, err = a.GetChannelMember(c, channelID, userID); err != nil {
 		return nil, err
 	} else if member.LastViewedAt == 0 {
 		return model.NewPostList(), nil
@@ -1229,7 +1229,7 @@ func (a *App) parseAndFetchChannelIdByNameFromInFilter(c *request.Context, chann
 		return channel, nil
 	}
 
-	channel, err := a.GetChannelByName(channelName, teamID, includeDeleted)
+	channel, err := a.GetChannelByName(c, channelName, teamID, includeDeleted)
 	if err != nil {
 		return nil, err
 	}
@@ -1547,7 +1547,7 @@ func (a *App) countMentionsFromPost(c request.CTX, user *model.User, post *model
 		return count, countRoot, nil
 	}
 
-	channelMember, err := a.GetChannelMember(context.Background(), channel.Id, user.Id)
+	channelMember, err := a.GetChannelMember(c, channel.Id, user.Id)
 	if err != nil {
 		return 0, 0, err
 	}

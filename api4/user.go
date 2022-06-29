@@ -2691,7 +2691,7 @@ func demoteUserToGuest(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := c.App.DemoteUserToGuest(user); err != nil {
+	if err := c.App.DemoteUserToGuest(c.AppContext, user); err != nil {
 		c.Err = err
 		return
 	}
@@ -2840,7 +2840,7 @@ func getChannelMembersForUser(c *Context, w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	members, err := c.App.GetChannelMembersWithTeamDataForUserWithPagination(c.Params.UserId, c.Params.Page, c.Params.PerPage)
+	members, err := c.App.GetChannelMembersWithTeamDataForUserWithPagination(c.AppContext, c.Params.UserId, c.Params.Page, c.Params.PerPage)
 	if err != nil {
 		c.Err = err
 		return
