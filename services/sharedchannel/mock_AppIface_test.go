@@ -206,7 +206,7 @@ func (_m *MockAppIface) GetOrCreateDirectChannel(c request.CTX, userId string, o
 	for _i := range channelOptions {
 		_va[_i] = channelOptions[_i]
 	}
-	var _ca []interface{}
+	var _ca []any
 	_ca = append(_ca, c, userId, otherUserId)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
