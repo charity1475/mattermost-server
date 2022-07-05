@@ -188,7 +188,7 @@ func (a *App) CreateChannelWithUser(c request.CTX, channel *model.Channel, userI
 	}
 
 	if int64(count+1) > *a.Config().TeamSettings.MaxChannelsPerTeam {
-		return nil, model.NewAppError("CreateChannelWithUser", "api.channel.create_channel.max_channel_limit.app_error", map[string]interface{}{"MaxChannelsPerTeam": *a.Config().TeamSettings.MaxChannelsPerTeam}, "", http.StatusBadRequest)
+		return nil, model.NewAppError("CreateChannelWithUser", "api.channel.create_channel.max_channel_limit.app_error", map[string]any{"MaxChannelsPerTeam": *a.Config().TeamSettings.MaxChannelsPerTeam}, "", http.StatusBadRequest)
 	}
 
 	channel.CreatorId = userID
@@ -799,7 +799,7 @@ func (a *App) RestoreChannel(c request.CTX, channel *model.Channel, userID strin
 
 		post := &model.Post{
 			ChannelId: channel.Id,
-			Message:   T("api.channel.restore_channel.unarchived", map[string]interface{}{"Username": user.Username}),
+			Message:   T("api.channel.restore_channel.unarchived", map[string]any{"Username": user.Username}),
 			Type:      model.PostTypeChannelRestored,
 			UserId:    userID,
 			Props: model.StringInterface{
@@ -820,7 +820,7 @@ func (a *App) RestoreChannel(c request.CTX, channel *model.Channel, userID strin
 
 			post := &model.Post{
 				ChannelId: channel.Id,
-				Message:   i18n.T("api.channel.restore_channel.unarchived", map[string]interface{}{"Username": systemBot.Username}),
+				Message:   i18n.T("api.channel.restore_channel.unarchived", map[string]any{"Username": systemBot.Username}),
 				Type:      model.PostTypeChannelRestored,
 				UserId:    systemBot.UserId,
 				Props: model.StringInterface{
@@ -1363,7 +1363,7 @@ func (a *App) DeleteChannel(c request.CTX, channel *model.Channel, userID string
 	}
 
 	if channel.Name == model.DefaultChannelName {
-		err := model.NewAppError("deleteChannel", "api.channel.delete_channel.cannot.app_error", map[string]interface{}{"Channel": model.DefaultChannelName}, "", http.StatusBadRequest)
+		err := model.NewAppError("deleteChannel", "api.channel.delete_channel.cannot.app_error", map[string]any{"Channel": model.DefaultChannelName}, "", http.StatusBadRequest)
 		return err
 	}
 
@@ -1457,7 +1457,7 @@ func (a *App) addUserToChannel(c request.CTX, user *model.User, channel *model.C
 			return nil, model.NewAppError("addUserToChannel", "api.channel.add_user_to_channel.type.app_error", nil, "", http.StatusInternalServerError)
 		}
 		if len(nonMembers) > 0 {
-			return nil, model.NewAppError("addUserToChannel", "api.channel.add_members.user_denied", map[string]interface{}{"UserIDs": nonMembers}, "", http.StatusBadRequest)
+			return nil, model.NewAppError("addUserToChannel", "api.channel.add_members.user_denied", map[string]any{"UserIDs": nonMembers}, "", http.StatusBadRequest)
 		}
 	}
 
@@ -1594,7 +1594,7 @@ func (a *App) AddDirectChannels(c request.CTX, teamID string, user *model.User) 
 	options := &model.UserGetOptions{InTeamId: teamID, Page: 0, PerPage: 100}
 	profiles, err := a.Srv().Store.User().GetProfiles(options)
 	if err != nil {
-		return model.NewAppError("AddDirectChannels", "api.user.add_direct_channels_and_forget.failed.error", map[string]interface{}{"UserId": user.Id, "TeamId": teamID, "Error": err.Error()}, "", http.StatusInternalServerError)
+		return model.NewAppError("AddDirectChannels", "api.user.add_direct_channels_and_forget.failed.error", map[string]any{"UserId": user.Id, "TeamId": teamID, "Error": err.Error()}, "", http.StatusInternalServerError)
 	}
 
 	var preferences model.Preferences
@@ -1619,7 +1619,7 @@ func (a *App) AddDirectChannels(c request.CTX, teamID string, user *model.User) 
 	}
 
 	if err := a.Srv().Store.Preference().Save(preferences); err != nil {
-		return model.NewAppError("AddDirectChannels", "api.user.add_direct_channels_and_forget.failed.error", map[string]interface{}{"UserId": user.Id, "TeamId": teamID, "Error": err.Error()}, "", http.StatusInternalServerError)
+		return model.NewAppError("AddDirectChannels", "api.user.add_direct_channels_and_forget.failed.error", map[string]any{"UserId": user.Id, "TeamId": teamID, "Error": err.Error()}, "", http.StatusInternalServerError)
 	}
 
 	return nil
@@ -2404,7 +2404,7 @@ func (a *App) removeUserFromChannel(c request.CTX, userIDToRemove string, remove
 
 	if channel.Name == model.DefaultChannelName {
 		if !isGuest {
-			return model.NewAppError("RemoveUserFromChannel", "api.channel.remove.default.app_error", map[string]interface{}{"Channel": model.DefaultChannelName}, "", http.StatusBadRequest)
+			return model.NewAppError("RemoveUserFromChannel", "api.channel.remove.default.app_error", map[string]any{"Channel": model.DefaultChannelName}, "", http.StatusBadRequest)
 		}
 	}
 
@@ -2414,7 +2414,7 @@ func (a *App) removeUserFromChannel(c request.CTX, userIDToRemove string, remove
 			return model.NewAppError("removeUserFromChannel", "api.channel.remove_user_from_channel.app_error", nil, err.Error(), http.StatusInternalServerError)
 		}
 		if len(nonMembers) == 0 {
-			return model.NewAppError("removeUserFromChannel", "api.channel.remove_members.denied", map[string]interface{}{"UserIDs": nonMembers}, "", http.StatusBadRequest)
+			return model.NewAppError("removeUserFromChannel", "api.channel.remove_members.denied", map[string]any{"UserIDs": nonMembers}, "", http.StatusBadRequest)
 		}
 	}
 
@@ -3302,11 +3302,11 @@ func (a *App) FillInChannelsProps(c request.CTX, channelList model.ChannelList) 
 			}
 
 			for _, channel := range channelList {
-				channelMentionsProp := make(map[string]interface{}, len(channelMentions[channel]))
+				channelMentionsProp := make(map[string]any, len(channelMentions[channel]))
 				for _, channelMention := range channelMentions[channel] {
 					if mentioned, ok := mentionedChannelsByName[channelMention]; ok {
 						if mentioned.Type == model.ChannelTypeOpen {
-							channelMentionsProp[mentioned.Name] = map[string]interface{}{
+							channelMentionsProp[mentioned.Name] = map[string]any{
 								"display_name": mentioned.DisplayName,
 							}
 						}

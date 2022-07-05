@@ -74,7 +74,7 @@ func (*InviteProvider) DoCommand(a *app.App, c *request.Context, args *model.Com
 
 		if channelToJoin, err = a.GetChannelByName(c, targetChannelName, args.TeamId, false); err != nil {
 			return &model.CommandResponse{
-				Text: args.T("api.command_invite.channel.error", map[string]interface{}{
+				Text: args.T("api.command_invite.channel.error", map[string]any{
 					"Channel": targetChannelName,
 				}),
 				ResponseType: model.CommandResponseTypeEphemeral,
@@ -95,7 +95,7 @@ func (*InviteProvider) DoCommand(a *app.App, c *request.Context, args *model.Com
 	case model.ChannelTypeOpen:
 		if !a.HasPermissionToChannel(c, args.UserId, channelToJoin.Id, model.PermissionManagePublicChannelMembers) {
 			return &model.CommandResponse{
-				Text: args.T("api.command_invite.permission.app_error", map[string]interface{}{
+				Text: args.T("api.command_invite.permission.app_error", map[string]any{
 					"User":    userProfile.Username,
 					"Channel": channelToJoin.Name,
 				}),
@@ -107,7 +107,7 @@ func (*InviteProvider) DoCommand(a *app.App, c *request.Context, args *model.Com
 			if _, err = a.GetChannelMember(c, channelToJoin.Id, args.UserId); err == nil {
 				// User doing the inviting is a member of the channel.
 				return &model.CommandResponse{
-					Text: args.T("api.command_invite.permission.app_error", map[string]interface{}{
+					Text: args.T("api.command_invite.permission.app_error", map[string]any{
 						"User":    userProfile.Username,
 						"Channel": channelToJoin.Name,
 					}),
@@ -116,7 +116,7 @@ func (*InviteProvider) DoCommand(a *app.App, c *request.Context, args *model.Com
 			}
 			// User doing the inviting is *not* a member of the channel.
 			return &model.CommandResponse{
-				Text: args.T("api.command_invite.private_channel.app_error", map[string]interface{}{
+				Text: args.T("api.command_invite.private_channel.app_error", map[string]any{
 					"Channel": channelToJoin.Name,
 				}),
 				ResponseType: model.CommandResponseTypeEphemeral,
@@ -133,7 +133,7 @@ func (*InviteProvider) DoCommand(a *app.App, c *request.Context, args *model.Com
 	_, err = a.GetChannelMember(c, channelToJoin.Id, userProfile.Id)
 	if err == nil {
 		return &model.CommandResponse{
-			Text: args.T("api.command_invite.user_already_in_channel.app_error", map[string]interface{}{
+			Text: args.T("api.command_invite.user_already_in_channel.app_error", map[string]any{
 				"User": userProfile.Username,
 			}),
 			ResponseType: model.CommandResponseTypeEphemeral,
@@ -148,7 +148,7 @@ func (*InviteProvider) DoCommand(a *app.App, c *request.Context, args *model.Com
 			text = args.T("api.command_invite.group_constrained_user_denied")
 		} else if err.Id == "app.team.get_member.missing.app_error" ||
 			err.Id == "api.channel.add_user.to.channel.failed.deleted.app_error" {
-			text = args.T("api.command_invite.user_not_in_team.app_error", map[string]interface{}{
+			text = args.T("api.command_invite.user_not_in_team.app_error", map[string]any{
 				"Username": userProfile.Username,
 			})
 		} else {
@@ -162,7 +162,7 @@ func (*InviteProvider) DoCommand(a *app.App, c *request.Context, args *model.Com
 
 	if args.ChannelId != channelToJoin.Id {
 		return &model.CommandResponse{
-			Text: args.T("api.command_invite.success", map[string]interface{}{
+			Text: args.T("api.command_invite.success", map[string]any{
 				"User":    userProfile.Username,
 				"Channel": channelToJoin.Name,
 			}),
