@@ -115,6 +115,11 @@ func (a *App) AdjustTeamsFromProductLimits(teamLimits *model.TeamsLimits) *model
 	return nil
 }
 
+func remove(s []*model.Team, i int) []*model.Team {
+	s[i] = s[len(s)-1]
+	return s[:len(s)-1]
+}
+
 func (a *App) SoftDeleteAllTeamsExcept(teamID string) *model.AppError {
 	teams, appErr := a.GetAllTeams()
 	if appErr != nil {
@@ -124,20 +129,17 @@ func (a *App) SoftDeleteAllTeamsExcept(teamID string) *model.AppError {
 	if teams == nil {
 		return nil
 	}
+	for i, team := range teams {
+		if team.Id == teamID {
+			teams = remove(teams, i)
+			break
+		}
+	}
 	cloudLimitsArchived := true
 	patch := &model.TeamPatch{CloudLimitsArchived: &cloudLimitsArchived}
-	for _, team := range teams {
-		if team.Id != teamID {
-			_, err := a.PatchTeam(team.Id, patch)
-			if err != nil {
-				return err
-			}
+	err := a.SoftDeleteTeamsWithPatch(teams, patch)
+	if err != nil {
 
-			err = a.SoftDeleteTeam(team.Id)
-			if err != nil {
-				return err
-			}
-		}
 	}
 	return nil
 }
@@ -1793,6 +1795,34 @@ func (a *App) PermanentDeleteTeam(team *model.Team) *model.AppError {
 	}
 
 	a.sendTeamEvent(team, model.WebsocketEventDeleteTeam)
+
+	return nil
+}
+
+// Used by Cloud to archive multiple teams when downgrading. Skips websocket events as the webapp doesn't have context of why the teams were archived
+func (a *App) SoftDeleteTeamsWithPatch(teams []*model.Team, patch *model.TeamPatch) *model.AppError {
+	for _, team := range teams {
+		team, err := a.GetTeam(team.Id)
+		if err != nil {
+			return err
+		}
+
+		team, nErr := a.ch.srv.teamService.PatchTeam(team.Id, patch)
+		team.DeleteAt = model.GetMillis()
+		team, nErr = a.Srv().Store.Team().Update(team)
+		if nErr != nil {
+			var invErr *store.ErrInvalidInput
+			var appErr *model.AppError
+			switch {
+			case errors.As(nErr, &invErr):
+				return model.NewAppError("SoftDeleteTeam", "app.team.update.find.app_error", nil, invErr.Error(), http.StatusBadRequest)
+			case errors.As(nErr, &appErr):
+				return appErr
+			default:
+				return model.NewAppError("SoftDeleteTeam", "app.team.update.updating.app_error", nil, nErr.Error(), http.StatusInternalServerError)
+			}
+		}
+	}
 
 	return nil
 }
