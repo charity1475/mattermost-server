@@ -477,7 +477,7 @@ func NewServer(options ...Option) (*Server, error) {
 		return nil, errors.Wrap(err, "Unable to create opengraphdata cache")
 	}
 
-	s.createPushNotificationsHub(request.EmptyContext())
+	s.createPushNotificationsHub(request.EmptyContext(s.GetLogger()))
 
 	if err2 := i18n.InitTranslations(*s.Config().LocalizationSettings.DefaultServerLocale, *s.Config().LocalizationSettings.DefaultClientLocale); err2 != nil {
 		return nil, errors.Wrapf(err2, "unable to load Mattermost translation files")
@@ -650,7 +650,8 @@ func NewServer(options ...Option) (*Server, error) {
 	s.AddConfigListener(func(old, new *model.Config) {
 		appInstance := New(ServerConnector(s.Channels()))
 		if *old.GuestAccountsSettings.Enable && !*new.GuestAccountsSettings.Enable {
-			if appErr := appInstance.DeactivateGuests(request.EmptyContext()); appErr != nil {
+			c := request.EmptyContext(s.GetLogger())
+			if appErr := appInstance.DeactivateGuests(c); appErr != nil {
 				mlog.Error("Unable to deactivate guest accounts", mlog.Err(appErr))
 			}
 		}
@@ -659,7 +660,8 @@ func NewServer(options ...Option) (*Server, error) {
 	// Disable active guest accounts on first run if guest accounts are disabled
 	if !*s.Config().GuestAccountsSettings.Enable {
 		appInstance := New(ServerConnector(s.Channels()))
-		if appErr := appInstance.DeactivateGuests(request.EmptyContext()); appErr != nil {
+		c := request.EmptyContext(s.GetLogger())
+		if appErr := appInstance.DeactivateGuests(c); appErr != nil {
 			mlog.Error("Unable to deactivate guest accounts", mlog.Err(appErr))
 		}
 	}
